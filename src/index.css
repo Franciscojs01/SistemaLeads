@@ -1,0 +1,40 @@
+:root{
+    --blue:#0652DD;
+    --blue-2:#2F80ED;
+    --white:#ffffff;
+    --muted:#f4f7fb;
+    --card-bg:#ffffff;
+}
+
+*{box-sizing:border-box;font-family:Inter,Segoe UI,Arial,sans-serif}
+body,html,#root{height:100%;margin:0;background:linear-gradient(180deg,var(--muted),#eaf2ff)}
+.app-root{min-height:100vh;display:flex;flex-direction:column}
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:linear-gradient(90deg,var(--blue),var(--blue-2));color:var(--white)}
+.brand{display:flex;gap:10px;align-items:center;cursor:pointer}
+.brand-text{font-weight:700;letter-spacing:1px}
+.logo{filter:drop-shadow(0 1px 0 rgba(0,0,0,0.05))}
+.nav-links button{margin-left:10px;background:transparent;border:none;color:var(--white);cursor:pointer;padding:6px 10px;border-radius:6px}
+.nav-links .btn-ghost{background:rgba(255,255,255,0.12)}
+.container{flex:1;padding:24px;max-width:1100px;margin:0 auto;width:100%}
+.card{background:var(--card-bg);padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(20,40,80,0.06);margin-bottom:12px}
+.center-card{max-width:420px;margin:40px auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.btn-primary{background:var(--blue-2);color:var(--white);border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+.btn-ghost{background:transparent;border:1px solid #d5e5ff;padding:6px 10px;border-radius:8px;cursor:pointer}
+.form{display:flex;flex-direction:column;gap:8px}
+.form input,.form select{padding:8px;border-radius:6px;border:1px solid #dfeefc}
+.services{border:1px dashed #e1f0ff;padding:10px;border-radius:8px}
+.service-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.service-row input{flex:1}
+.form-actions{display:flex;gap:8px;margin-top:8px}
+.list{display:flex;flex-direction:column;gap:10px}
+.lead-card .lead-header{display:flex;justify-content:space-between;align-items:center}
+.status{padding:6px 8px;border-radius:6px;color:#fff;text-transform:capitalize;font-size:12px}
+.status.quente{background:#e74c3c}
+.status.morno{background:#f39c12}
+.status.frio{background:#7f8c8d}
+.lead-total{margin-top:8px;font-weight:600}
+.finance-table{width:100%;border-collapse:collapse}
+.finance-table th,.finance-table td{padding:8px;border-bottom:1px solid #eef6ff;text-align:left}
+.finance-table .grand td{font-weight:700}
+.footer{text-align:center;padding:12px;color:#6b7280;font-size:13px}
