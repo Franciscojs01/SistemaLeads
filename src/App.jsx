@@ -1,41 +1,139 @@
-import React, { useState } from "react";
-import Navbar from "./components/NavBar";
-import Login from "./components/Login";
-import Home from "./components/Home";
-import LeadForm from "./components/LeadForm";
+import React, {useEffect, useMemo, useState} from "react";
+import Navbar from "./components/NavBar.jsx";
+import Login from "./components/Login.jsx";
+import LeadForm from "./components/LeadForm.jsx";
 import LeadList from "./components/LeadList.jsx";
-import Finance from "./components/Financeiro.jsx";
+import Financeiro from "./components/Financeiro.jsx";
+import Dashboard from "./components/DashBoard.jsx";
+import Board from "./components/Board.jsx";
+import "./App.css";
+
+const SECTORS = [
+    {id: "marketing", label: "Marketing"},
+    {id: "presidencia", label: "Presidência"},
+    {id: "projetos", label: "Projetos"},
+    {id: "gestao_pessoas", label: "Gestão de Pessoas"},
+    {id: "financeiro", label: "Financeiro"},
+];
+
+// opcional (mas ajuda muito): persistência
+const STORAGE_KEY = "animus_leads_v1";
 
 export default function App() {
     const [user, setUser] = useState(null);
     const [page, setPage] = useState("login");
-    const [leads, setLeads] = useState([]);
 
-    function handleLogin(name) {
-        setUser({ name });
+    const [leads, setLeads] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        } catch {
+            return [];
+        }
+    });
+
+    const [activeSector, setActiveSector] = useState(null);
+
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+    }, [leads]);
+
+    function handleLogin(userObj) {
+        setUser(userObj);
         setPage("home");
     }
 
     function handleLogout() {
         setUser(null);
+        setActiveSector(null);
         setPage("login");
     }
 
-    function addLead(lead) {
-        setLeads((s) => [...s, { id: Date.now(), ...lead }]);
-        setPage("control");
+    function handleNavigate(target) {
+        const map = {
+            controle: "control",
+            financeiro: "finance",
+            finance: "finance",
+            cadastro: "cadastro",
+            home: "home",
+        };
+        setPage(map[target] || target);
     }
+
+    function openSector(sectorId) {
+        setActiveSector(sectorId); // <- SEMPRE ID (ex: "marketing")
+        setPage("board");
+    }
+
+    function addLead(lead) {
+        // Normaliza: sempre salva com ID do setor
+        const sectorId = activeSector || lead.sector || "geral";
+
+        const newLead = {
+            id: crypto?.randomUUID?.() ?? Date.now().toString(),
+            ...lead,
+            sector: sectorId,
+            column: lead.column || "novo",
+            value: Number(lead.value || 0),
+        };
+
+        setLeads((prev) => [...prev, newLead]);
+        setActiveSector(sectorId);
+        setPage("board");
+    }
+
+    const activeSectorObj = useMemo(
+        () => SECTORS.find((s) => s.id === activeSector),
+        [activeSector]
+    );
+
+    const sectorTitle = activeSectorObj?.label || (activeSector ? activeSector : "Quadro");
+
+    const leadsForActiveSector = useMemo(() => {
+        if (!activeSector) return [];
+        return leads.filter((l) => l.sector === activeSector);
+    }, [leads, activeSector]);
 
     return (
         <div className="app-root">
-            {user && <Navbar user={user} onNavigate={setPage} onLogout={handleLogout} />}
+            {user && <Navbar user={user} onNavigate={handleNavigate} onLogout={handleLogout}/>}
+
             <main className="container">
-                {!user && page === "login" && <Login onLogin={handleLogin} />}
-                {user && page === "home" && <Home onNavigate={setPage} />}
-                {user && page === "cadastro" && <LeadForm onAdd={addLead} onCancel={() => setPage("home")} />}
-                {user && page === "control" && <LeadList leads={leads} />}
-                {user && page === "finance" && <Finance leads={leads} />}
+                {!user && page === "login" && <Login onLogin={handleLogin}/>}
+
+                {user && page === "home" && <Dashboard onOpenSector={openSector}/>}
+
+                {user && page === "board" && (
+                    <Board
+                        sectorId={activeSector || "geral"}
+                        sectorTitle={sectorTitle}
+                        initialLeads={leadsForActiveSector}
+                        onBack={() => setPage("home")}
+                        onChange={(changed) => {
+                            // remove só os leads do setor ativo e repõe com o que veio do board
+                            const others = leads.filter((l) => l.sector !== activeSector);
+                            setLeads([...others, ...changed]);
+                        }}
+                        sectors={SECTORS}
+                    />
+                )}
+
+                {user && page === "cadastro" && (
+                    <LeadForm
+                        onAdd={addLead}
+                        onCancel={() => setPage(activeSector ? "board" : "home")}
+                    />
+                )}
+
+                {user && page === "control" && (
+                    <div className="page">
+                        <h2>Controle</h2>
+                        <LeadList leads={leads}/>
+                    </div>
+                )}
+
+                {user && page === "finance" && <Financeiro leads={leads}/>}
             </main>
+
             <footer className="footer">© animus · Empresa Júnior de Advocacia</footer>
         </div>
     );

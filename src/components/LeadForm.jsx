@@ -1,60 +1,39 @@
 import React, { useState } from "react";
 
-const blankService = () => ({ name: "", price: "", payment: "" });
-
 export default function LeadForm({ onAdd, onCancel }) {
-    const [name, setName] = useState("");
-    const [status, setStatus] = useState("quente");
-    const [services, setServices] = useState([blankService()]);
+    const [form, setForm] = useState({ name: "", status: "quente", service: "", payment: "", value: "" });
 
-    function updateService(idx, field, value) {
-        setServices((s) => s.map((sv, i) => (i === idx ? { ...sv, [field]: value } : sv)));
-    }
-
-    function addService() {
-        setServices((s) => [...s, blankService()]);
-    }
-
-    function removeService(idx) {
-        setServices((s) => s.filter((_, i) => i !== idx));
-    }
-
-    function submit(e) {
+    const submit = (e) => {
         e.preventDefault();
-        const cleanedServices = services
-            .filter((s) => s.name.trim())
-            .map((s) => ({ name: s.name.trim(), price: parseFloat(s.price) || 0, payment: s.payment }));
-        onAdd({ name: name.trim(), status, services: cleanedServices });
-    }
+        if (!form.name.trim()) return;
+        onAdd({ ...form, value: Number(form.value || 0) });
+        setForm({ name: "", status: "quente", service: "", payment: "", value: "" });
+    };
 
     return (
-        <div className="card form-card">
-            <h3>Novo Lead</h3>
-            <form onSubmit={submit} className="form">
-                <label>Nome do lead</label>
-                <input value={name} onChange={(e) => setName(e.target.value)} required />
+        <div className="card">
+            <form className="form" onSubmit={submit}>
+                <label>Nome do Lead</label>
+                <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
+
                 <label>Status</label>
-                <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                <select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>
                     <option value="quente">Quente</option>
                     <option value="morno">Morno</option>
                     <option value="frio">Frio</option>
                 </select>
 
-                <fieldset className="services">
-                    <legend>Serviços</legend>
-                    {services.map((s, idx) => (
-                        <div key={idx} className="service-row">
-                            <input placeholder="Serviço" value={s.name} onChange={(e) => updateService(idx, "name", e.target.value)} />
-                            <input placeholder="Valor" value={s.price} onChange={(e) => updateService(idx, "price", e.target.value)} />
-                            <input placeholder="Forma de pagamento" value={s.payment} onChange={(e) => updateService(idx, "payment", e.target.value)} />
-                            <button type="button" className="btn-ghost" onClick={() => removeService(idx)}>Excluir</button>
-                        </div>
-                    ))}
-                    <button type="button" onClick={addService}>Adicionar serviço</button>
-                </fieldset>
+                <label>Serviço</label>
+                <input value={form.service} onChange={e=>setForm({...form,service:e.target.value})} />
 
-                <div className="form-actions">
-                    <button type="submit" className="btn-primary">Salvar Lead</button>
+                <label>Forma de Pagamento</label>
+                <input value={form.payment} onChange={e=>setForm({...form,payment:e.target.value})} />
+
+                <label>Valor (R$)</label>
+                <input type="number" step="0.01" value={form.value} onChange={e=>setForm({...form,value:e.target.value})} />
+
+                <div style={{display:"flex",gap:8,marginTop:8}}>
+                    <button className="btn-primary" type="submit">Adicionar</button>
                     <button type="button" className="btn-ghost" onClick={onCancel}>Cancelar</button>
                 </div>
             </form>
