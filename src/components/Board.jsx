@@ -1,36 +1,74 @@
 import React, {useEffect, useMemo, useState} from "react";
 import "../index.css";
 
-const DEFAULT_COLUMNS = [
-    {id: "novo", title: "Novo"},
-    {id: "em_progresso", title: "Em Progresso"},
-    {id: "concluido", title: "Concluído"},
-];
+const DEFAULT_COLUMNS = [{id: "novo", title: "Novo"}, {id: "em_progresso", title: "Em Progresso"}, {
+    id: "concluido",
+    title: "Concluído"
+},];
 
-const statusColor = (s) =>
-    s === "quente"
-        ? "rgba(255,88,88,0.12)"
-        : s === "morno"
-            ? "rgba(255,186,59,0.12)"
-            : "rgba(102,126,234,0.08)";
+const statusColor = (s) => s === "quente" ? "rgba(255,88,88,0.12)" : s === "morno" ? "rgba(255,186,59,0.12)" : "rgba(102,126,234,0.08)";
+
+const SECTOR_CONFIG = {
+    marketing: {
+        title: "Marketing",
+        description: "Visibilidade dos leads quentes, mornos e serviços ativos.",
+        nameLabel: "Lead/Empresa",
+        serviceLabel: "Serviço",
+        paymentLabel: "Origem do lead",
+        showStatus: true,
+    }, presidencia: {
+        title: "Presidência",
+        description: "Controle das demandas e parcerias estratégicas.",
+        nameLabel: "Demanda estratégica",
+        serviceLabel: "Parceiro",
+        paymentLabel: "Tipo de demanda",
+        showStatus: true,
+    }, vp: {
+        title: "VP",
+        description: "Gestão de pessoas e acompanhamento de estratégias.",
+        nameLabel: "Iniciativa",
+        serviceLabel: "Gestão de pessoas",
+        paymentLabel: "Gestão de estratégias",
+        showStatus: true,
+    }, adm_fin: {
+        title: "ADM Financeiro",
+        description: "Resumo de lançamentos financeiros e pagamentos.",
+        nameLabel: "Lançamento",
+        serviceLabel: "Categoria financeira",
+        paymentLabel: "Forma de pagamento",
+        showStatus: false,
+    }, projetos: {
+        title: "Projetos",
+        description: "Demandas organizadas por cliente e entregas.",
+        nameLabel: "Demanda do projeto",
+        serviceLabel: "Cliente",
+        paymentLabel: "Escopo/entrega",
+        showStatus: true,
+    }, comercial: {
+        title: "Comercial",
+        description: "Pipeline de oportunidades e relacionamento com clientes.",
+        nameLabel: "Oportunidade",
+        serviceLabel: "Serviço",
+        paymentLabel: "Canal de origem",
+        showStatus: true,
+    }, geral: {
+        title: "Quadro",
+        description: "Acompanhe as atividades do setor.",
+        nameLabel: "Título",
+        serviceLabel: "Serviço",
+        paymentLabel: "Detalhe",
+        showStatus: true,
+    },
+};
+
 
 export default function Board({
-                                  sectorId = "geral",
-                                  sectorTitle = "Quadro",
-                                  initialLeads = [],
-                                  onBack,
-                                  onChange,
-                                  sectors = [],
+                                  sectorId = "geral", sectorTitle = "Quadro", initialLeads = [], onBack, sectors = [],
                               }) {
     const [leads, setLeads] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({
-        name: "",
-        status: "quente",
-        service: "",
-        payment: "",
-        value: "",
-        column: "novo",
+        name: "", status: "quente", service: "", payment: "", value: "", column: "novo",
     });
 
     const [columns, setColumns] = useState(DEFAULT_COLUMNS);
@@ -39,10 +77,7 @@ export default function Board({
 
     useEffect(() => {
         const normalized = (initialLeads || []).map((l) => ({
-            ...l,
-            sector: l.sector ?? sectorId,
-            column: l.column || "novo",
-            value: Number(l.value || 0),
+            ...l, sector: l.sector ?? sectorId, column: l.column || "novo", value: Number(l.value || 0),
         }));
 
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -50,10 +85,26 @@ export default function Board({
     }, [initialLeads, sectorId]);
 
 
-    const totalValue = useMemo(
-        () => leads.reduce((s, l) => s + (Number(l.value) || 0), 0),
-        [leads]
-    );
+    const totalValue = useMemo(() => leads.reduce((s, l) => s + (Number(l.value) || 0), 0), [leads]);
+
+    const sectorConfig = SECTOR_CONFIG[sectorId] || SECTOR_CONFIG.geral;
+
+    const statusTotals = useMemo(() => {
+        return leads.reduce((acc, lead) => {
+            const key = lead.status || "frio";
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {quente: 0, morno: 0, frio: 0});
+    }, [leads]);
+
+    const serviceTotals = useMemo(() => {
+        return leads.reduce((acc, lead) => {
+            const key = lead.service?.trim() || "Sem serviço";
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+    }, [leads]);
+
 
     const addLead = (e) => {
         e?.preventDefault();
@@ -72,26 +123,17 @@ export default function Board({
 
         setLeads((prev) => [newLead, ...prev]);
         setForm({
-            name: "",
-            status: "quente",
-            service: "",
-            payment: "",
-            value: "",
-            column: "novo",
+            name: "", status: "quente", service: "", payment: "", value: "", column: "novo",
         });
         setShowForm(false);
     };
 
     const moveTo = (id, columnId) => {
-        setLeads((prev) =>
-            prev.map((l) => (l.id === id ? {...l, column: columnId} : l))
-        );
+        setLeads((prev) => prev.map((l) => (l.id === id ? {...l, column: columnId} : l)));
     };
 
     const changeSector = (id, newSectorId) => {
-        setLeads((prev) =>
-            prev.map((l) => (l.id === id ? {...l, sector: newSectorId} : l))
-        );
+        setLeads((prev) => prev.map((l) => (l.id === id ? {...l, sector: newSectorId} : l)));
     };
 
     // Drag & drop
@@ -119,14 +161,10 @@ export default function Board({
         setNewColName("");
     };
 
-    return (
-        <div className="container">
+    return (<div className="container">
             <div
                 style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 12,
+                    display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12,
                 }}
             >
                 <div>
@@ -145,34 +183,67 @@ export default function Board({
                         {showForm ? "Fechar" : "Adicionar Lead"}
                     </button>
                 </div>
+
+                <div className="card" style={{marginBottom: 12, padding: 16}}>
+                    <div style={{display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap"}}>
+                        <div>
+                            <h3 style={{margin: 0}}>{sectorConfig.title}</h3>
+                            <p style={{margin: "6px 0 0", color: "var(--muted)"}}>
+                                {sectorConfig.description}
+                            </p>
+                        </div>
+                        {sectorId === "marketing" && (<div style={{display: "flex", gap: 12, flexWrap: "wrap"}}>
+                                <div className="total-badge">Quentes: {statusTotals.quente}</div>
+                                <div className="total-badge">Mornos: {statusTotals.morno}</div>
+                                <div className="total-badge">Frios: {statusTotals.frio}</div>
+                            </div>)}
+                    </div>
+
+                    {sectorId === "marketing" && (<div style={{marginTop: 12}}>
+                            <div style={{fontSize: 12, color: "var(--muted)"}}>Serviços em destaque</div>
+                            <div style={{display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6}}>
+                                {Object.entries(serviceTotals).map(([service, count]) => (
+                                    <span key={service} className="badge">
+                                    {service}: {count}
+                                </span>))}
+                                {Object.keys(serviceTotals).length === 0 && (
+                                    <span className="badge">Nenhum serviço cadastrado</span>)}
+                            </div>
+                        </div>)}
+                </div>
+
             </div>
 
-            {showForm && (
-                <div className="card" style={{marginBottom: 12}}>
+            {showForm && (<div className="card" style={{marginBottom: 12}}>
                     <form className="form" onSubmit={addLead}>
-                        <label>Nome do Lead</label>
+                        <label>{sectorConfig.nameLabel}</label>
                         <input
                             value={form.name}
                             onChange={(e) => setForm({...form, name: e.target.value})}
                         />
+                        {sectorConfig.showStatus && (
+                            <>
+                                <label>Status</label>
+                                <select
+                                    value={form.status}
+                                    onChange={(e) => setForm({...form, status: e.target.value})}
+                                >
+                                    <option value="quente">Quente</option>
+                                    <option value="morno">Morno</option>
+                                    <option value="frio">Frio</option>
+                                </select>
+                            </>
+                        )}
 
-                        <label>Status</label>
-                        <select
-                            value={form.status}
-                            onChange={(e) => setForm({...form, status: e.target.value})}
-                        >
-                            <option value="quente">Quente</option>
-                            <option value="morno">Morno</option>
-                            <option value="frio">Frio</option>
-                        </select>
+                        <label>{sectorConfig.serviceLabel}</label>
 
-                        <label>Serviço</label>
+
                         <input
                             value={form.service}
                             onChange={(e) => setForm({...form, service: e.target.value})}
                         />
 
-                        <label>Forma de Pagamento</label>
+                        <label>{sectorConfig.paymentLabel}</label>
                         <input
                             value={form.payment}
                             onChange={(e) => setForm({...form, payment: e.target.value})}
@@ -191,11 +262,9 @@ export default function Board({
                             value={form.column}
                             onChange={(e) => setForm({...form, column: e.target.value})}
                         >
-                            {columns.map((c) => (
-                                <option key={c.id} value={c.id}>
+                            {columns.map((c) => (<option key={c.id} value={c.id}>
                                     {c.title}
-                                </option>
-                            ))}
+                                </option>))}
                         </select>
 
                         <div style={{display: "flex", gap: 8, marginTop: 8}}>
@@ -211,8 +280,7 @@ export default function Board({
                             </button>
                         </div>
                     </form>
-                </div>
-            )}
+                </div>)}
 
             <div className="card" style={{marginBottom: 12}}>
                 <div style={{display: "flex", gap: 8, alignItems: "center"}}>
@@ -230,17 +298,14 @@ export default function Board({
             <div
                 className="board"
                 style={{
-                    display: "grid",
-                    gridTemplateColumns: `repeat(${columns.length}, 1fr)`,
-                    gap: 12,
+                    display: "grid", gridTemplateColumns: `repeat(${columns.length}, 1fr)`, gap: 12,
                 }}
             >
                 {columns.map((col) => {
                     const items = leads.filter((l) => l.column === col.id);
                     const colTotal = items.reduce((s, l) => s + (Number(l.value) || 0), 0);
 
-                    return (
-                        <div
+                    return (<div
                             key={col.id}
                             className="column card"
                             onDragOver={onDragOver}
@@ -265,8 +330,7 @@ export default function Board({
                             </div>
 
                             <div style={{display: "flex", flexDirection: "column", gap: 10}}>
-                                {items.map((l) => (
-                                    <div
+                                {items.map((l) => (<div
                                         key={l.id}
                                         draggable
                                         onDragStart={(e) => onDragStart(e, l.id)}
@@ -284,17 +348,24 @@ export default function Board({
                                         <div style={{flex: 1, marginRight: 8}}>
                                             <div style={{fontWeight: 700}}>{l.name}</div>
                                             <div style={{color: "var(--muted)", fontSize: 13, marginTop: 6}}>
-                                                {l.service || "—"} ·{" "}
-                                                <span
-                                                    style={{
-                                                        background: statusColor(l.status),
-                                                        padding: "2px 8px",
-                                                        borderRadius: 999,
-                                                        fontWeight: 600,
-                                                    }}
-                                                >
-                          {l.status}
-                        </span>{" "}
+                                                {l.service || "—"}
+                                                {sectorConfig.showStatus && (
+                                                    <>
+                                                        {" "}
+                                                        ·{" "}
+                                                        <span
+                                                            style={{
+                                                                background: statusColor(l.status),
+                                                                padding: "2px 8px",
+                                                                borderRadius: 999,
+                                                                fontWeight: 600,
+                                                            }}
+                                                        >
+                                                            {l.status}
+                                                        </span>
+                                                    </>
+                                                )}{" "}
+
                                                 · {l.payment || "—"}
                                             </div>
 
@@ -308,11 +379,9 @@ export default function Board({
                                                         onChange={(e) => changeSector(l.id, e.target.value)}
                                                     >
                                                         <option value={sectorId}>{sectorTitle}</option>
-                                                        {sectors.map((s) => (
-                                                            <option key={s.id} value={s.id}>
+                                                        {sectors.map((s) => (<option key={s.id} value={s.id}>
                                                                 {s.label}
-                                                            </option>
-                                                        ))}
+                                                            </option>))}
                                                     </select>
                                                 </div>
                                             </div>
@@ -324,10 +393,7 @@ export default function Board({
                                             </div>
 
                                             <div style={{
-                                                display: "flex",
-                                                gap: 6,
-                                                marginTop: 8,
-                                                justifyContent: "flex-end"
+                                                display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end"
                                             }}>
                                                 <button
                                                     className="btn-ghost"
@@ -352,19 +418,14 @@ export default function Board({
                                                 </button>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    </div>))}
 
-                                {items.length === 0 && (
-                                    <div style={{color: "var(--muted)", fontSize: 13}}>
+                                {items.length === 0 && (<div style={{color: "var(--muted)", fontSize: 13}}>
                                         Nenhum lead nesta coluna
-                                    </div>
-                                )}
+                                    </div>)}
                             </div>
-                        </div>
-                    );
+                        </div>);
                 })}
             </div>
-        </div>
-    );
+        </div>);
 }
