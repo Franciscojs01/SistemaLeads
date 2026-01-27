@@ -10,10 +10,12 @@ import "./App.css";
 
 const SECTORS = [
     { id: "marketing", label: "Marketing" },
+    { id: "comercial", label: "Comercial Jurídico" },
     { id: "presidencia", label: "Presidência" },
     { id: "projetos", label: "Projetos" },
     { id: "gestao_pessoas", label: "Gestão de Pessoas" },
-    { id: "financeiro", label: "Financeiro" },
+    { id: "gestao_estrategias", label: "Gestão de Estratégias" },
+    { id: "adm_fin", label: "ADM Financeiro" },
 ];
 
 const STORAGE_KEY = "animus_leads_v1";
@@ -96,7 +98,9 @@ export default function App() {
 
     return (
         <div className="app-root">
-            {user && <Navbar user={user} onNavigate={handleNavigate} onLogout={handleLogout} />}
+            {user && (
+                <Navbar user={user} onNavigate={handleNavigate} onLogout={handleLogout} />
+            )}
 
             <main className="container">
                 {!user && page === "login" && <Login onLogin={handleLogin} />}

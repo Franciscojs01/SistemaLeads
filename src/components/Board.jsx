@@ -1,146 +1,255 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "../index.css";
 
-const DEFAULT_COLUMNS = [{id: "novo", title: "Novo"}, {id: "em_progresso", title: "Em Progresso"}, {
-    id: "concluido",
-    title: "Concluído"
-},];
+const statusColor = (s) =>
+    s === "quente"
+        ? "rgba(255,88,88,0.12)"
+        : s === "morno"
+            ? "rgba(255,186,59,0.12)"
+            : "rgba(102,126,234,0.08)";
 
-const statusColor = (s) => s === "quente" ? "rgba(255,88,88,0.12)" : s === "morno" ? "rgba(255,186,59,0.12)" : "rgba(102,126,234,0.08)";
+const DEFAULT_COLUMNS = [
+    { id: "novo", title: "Novo" },
+    { id: "em_progresso", title: "Em Progresso" },
+    { id: "concluido", title: "Concluído" },
+];
 
+// Config central: labels + visibilidade + colunas por setor
 const SECTOR_CONFIG = {
     marketing: {
         title: "Marketing",
-        description: "Visibilidade dos leads quentes, mornos e serviços ativos.",
+        description: "Atração e qualificação de leads (topo de funil).",
         nameLabel: "Lead/Empresa",
-        serviceLabel: "Serviço",
+        serviceLabel: "Área/Serviço de interesse",
         paymentLabel: "Origem do lead",
-        showStatus: true,
-    }, presidencia: {
+        showStatus: true,     // quente/morno/frio
+        showValue: false,     // marketing geralmente não precisa valor
+        columns: DEFAULT_COLUMNS,
+    },
+
+    comercial: {
+        title: "Comercial Jurídico",
+        description: "Pipeline de fechamento de contratos (advocacia).",
+        nameLabel: "Cliente / Caso",
+        serviceLabel: "Área do direito",
+        paymentLabel: "Próximo passo / Observação",
+        showStatus: false,    // NÃO é quente/morno/frio
+        showValue: true,      // estimativa de honorários/contrato faz sentido
+        columns: [
+            { id: "primeiro_contato", title: "1º Contato" },
+            { id: "triagem", title: "Triagem" },
+            { id: "analise", title: "Análise do Caso" },
+            { id: "proposta", title: "Proposta Enviada" },
+            { id: "negociacao", title: "Negociação" },
+            { id: "contrato", title: "Contrato Assinado" },
+            { id: "perdido", title: "Perdido/Arquivado" },
+        ],
+    },
+
+    presidencia: {
         title: "Presidência",
-        description: "Controle das demandas e parcerias estratégicas.",
+        description: "Demandas estratégicas, parcerias e decisões.",
         nameLabel: "Demanda estratégica",
-        serviceLabel: "Parceiro",
-        paymentLabel: "Tipo de demanda",
-        showStatus: true,
-    }, vp: {
-        title: "VP",
-        description: "Gestão de pessoas e acompanhamento de estratégias.",
-        nameLabel: "Iniciativa",
-        serviceLabel: "Gestão de pessoas",
-        paymentLabel: "Gestão de estratégias",
-        showStatus: true,
-    }, adm_fin: {
-        title: "ADM Financeiro",
-        description: "Resumo de lançamentos financeiros e pagamentos.",
-        nameLabel: "Lançamento",
-        serviceLabel: "Categoria financeira",
-        paymentLabel: "Forma de pagamento",
+        serviceLabel: "Parceiro / Frente",
+        paymentLabel: "Tipo / Contexto",
         showStatus: false,
-    }, projetos: {
+        showValue: false,
+        columns: [
+            { id: "entrada", title: "Entrada" },
+            { id: "em_analise", title: "Em análise" },
+            { id: "em_execucao", title: "Em execução" },
+            { id: "concluido", title: "Concluído" },
+        ],
+    },
+
+    projetos: {
         title: "Projetos",
-        description: "Demandas organizadas por cliente e entregas.",
+        description: "Entregas e demandas por cliente (sem status/valor).",
         nameLabel: "Demanda do projeto",
         serviceLabel: "Cliente",
         paymentLabel: "Escopo/entrega",
-        showStatus: true,
-    }, comercial: {
-        title: "Comercial",
-        description: "Pipeline de oportunidades e relacionamento com clientes.",
-        nameLabel: "Oportunidade",
-        serviceLabel: "Serviço",
-        paymentLabel: "Canal de origem",
-        showStatus: true,
-    }, geral: {
+        showStatus: false,
+        showValue: false,
+        columns: [
+            { id: "planejamento", title: "Planejamento" },
+            { id: "andamento", title: "Em andamento" },
+            { id: "revisao", title: "Em revisão" },
+            { id: "finalizado", title: "Finalizado" },
+        ],
+    },
+
+    gestao_pessoas: {
+        title: "Gestão de Pessoas",
+        description: "1:1, onboarding, desempenho, trilhas e feedbacks.",
+        nameLabel: "Pessoa / Tema",
+        serviceLabel: "Categoria (1:1, onboarding, feedback...)",
+        paymentLabel: "Responsável / Observação",
+        showStatus: false,
+        showValue: false,
+        columns: [
+            { id: "backlog", title: "Backlog" },
+            { id: "agendado", title: "Agendado" },
+            { id: "em_andamento", title: "Em andamento" },
+            { id: "concluido", title: "Concluído" },
+        ],
+    },
+
+    gestao_estrategias: {
+        title: "Gestão de Estratégias",
+        description: "OKRs, iniciativas, parcerias e metas (sem status/valor).",
+        nameLabel: "Iniciativa",
+        serviceLabel: "Objetivo",
+        paymentLabel: "Impacto/Observação",
+        showStatus: false,
+        showValue: false,
+        columns: [
+            { id: "ideias", title: "Ideias" },
+            { id: "analise", title: "Análise" },
+            { id: "aprovado", title: "Aprovado" },
+            { id: "execucao", title: "Em execução" },
+            { id: "concluido", title: "Concluído" },
+        ],
+    },
+
+    adm_fin: {
+        title: "ADM Financeiro",
+        description: "Pagamentos, recebimentos e controle de fluxo.",
+        nameLabel: "Movimentação",
+        serviceLabel: "Categoria financeira",
+        paymentLabel: "Forma de pagamento",
+        showStatus: false,
+        showValue: true,
+        columns: [
+            { id: "previsto", title: "Previsto" },
+            { id: "em_aberto", title: "Em aberto" },
+            { id: "pago", title: "Pago" },
+            { id: "atrasado", title: "Atrasado" },
+        ],
+    },
+
+    geral: {
         title: "Quadro",
         description: "Acompanhe as atividades do setor.",
         nameLabel: "Título",
-        serviceLabel: "Serviço",
+        serviceLabel: "Categoria",
         paymentLabel: "Detalhe",
-        showStatus: true,
+        showStatus: false,
+        showValue: false,
+        columns: DEFAULT_COLUMNS,
     },
 };
 
-
 export default function Board({
-                                  sectorId = "geral", sectorTitle = "Quadro", initialLeads = [], onBack, sectors = [],
+                                  sectorId = "geral",
+                                  sectorTitle = "Quadro",
+                                  initialLeads = [],
+                                  onBack,
+                                  onChange,
+                                  sectors = [],
                               }) {
-    const [leads, setLeads] = useState([]);
-    const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState({
-        name: "", status: "quente", service: "", payment: "", value: "", column: "novo",
-    });
-
-    const [columns, setColumns] = useState(DEFAULT_COLUMNS);
-    const [newColName, setNewColName] = useState("");
-
-
-    useEffect(() => {
-        const normalized = (initialLeads || []).map((l) => ({
-            ...l, sector: l.sector ?? sectorId, column: l.column || "novo", value: Number(l.value || 0),
-        }));
-
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLeads(normalized);
-    }, [initialLeads, sectorId]);
-
-
-    const totalValue = useMemo(() => leads.reduce((s, l) => s + (Number(l.value) || 0), 0), [leads]);
-
     const sectorConfig = SECTOR_CONFIG[sectorId] || SECTOR_CONFIG.geral;
 
+    const [leads, setLeads] = useState([]);
+    const [showForm, setShowForm] = useState(false);
+
+    const [columns, setColumns] = useState(sectorConfig.columns || DEFAULT_COLUMNS);
+    const [newColName, setNewColName] = useState("");
+
+    const [form, setForm] = useState({
+        name: "",
+        status: "quente",
+        service: "",
+        payment: "",
+        value: "",
+        column: (sectorConfig.columns?.[0]?.id || "novo"),
+    });
+
+    // quando trocar de setor, troca colunas e ajusta "column" default
+    useEffect(() => {
+        setColumns(sectorConfig.columns || DEFAULT_COLUMNS);
+        setForm((prev) => ({
+            ...prev,
+            column: (sectorConfig.columns?.[0]?.id || "novo"),
+            value: "",
+            status: "quente",
+        }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sectorId]);
+
+    // sincroniza os cards do setor vindo do App
+    useEffect(() => {
+        const normalized = (initialLeads || []).map((l) => ({
+            ...l,
+            sector: l.sector ?? sectorId,
+            column: l.column || (sectorConfig.columns?.[0]?.id || "novo"),
+            value: Number(l.value || 0),
+        }));
+        setLeads(normalized);
+    }, [initialLeads, sectorId, sectorConfig.columns]);
+
+    const commit = (updater) => {
+        setLeads((prev) => {
+            const next = typeof updater === "function" ? updater(prev) : updater;
+            onChange?.(next);
+            return next;
+        });
+    };
+
+    const totalValue = useMemo(() => {
+        if (!sectorConfig.showValue) return 0;
+        return leads.reduce((s, l) => s + (Number(l.value) || 0), 0);
+    }, [leads, sectorConfig.showValue]);
+
     const statusTotals = useMemo(() => {
+        if (!sectorConfig.showStatus) return null;
         return leads.reduce(
             (acc, lead) => {
                 const key = lead.status || "frio";
                 acc[key] = (acc[key] || 0) + 1;
                 return acc;
             },
-            {quente: 0, morno: 0, frio: 0}
+            { quente: 0, morno: 0, frio: 0 }
         );
-    }, [leads]);
+    }, [leads, sectorConfig.showStatus]);
 
-
-    const serviceTotals = useMemo(() => {
-        return leads.reduce((acc, lead) => {
-            const key = lead.service?.trim() || "Sem serviço";
-            acc[key] = (acc[key] || 0) + 1;
-            return acc;
-        }, {});
-    }, [leads]);
-
-
-    const addLead = (e) => {
+    const addItem = (e) => {
         e?.preventDefault();
         if (!form.name.trim()) return;
 
-        const newLead = {
-            id: crypto?.randomUUID?.() ?? Date.now().toString(),
+        const newItem = {
+            id:
+                (globalThis.crypto && crypto.randomUUID && crypto.randomUUID()) ||
+                `${Date.now()}_${Math.random().toString(16).slice(2)}`,
             name: form.name.trim(),
-            status: form.status,
+            status: sectorConfig.showStatus ? form.status : undefined,
             service: form.service,
             payment: form.payment,
             value: sectorConfig.showValue ? Number(form.value || 0) : 0,
-            column: form.column || "novo",
+            column: form.column || (columns[0]?.id || "novo"),
             sector: sectorId,
         };
 
-        setLeads((prev) => [newLead, ...prev]);
+        commit((prev) => [newItem, ...prev]);
+
         setForm({
-            name: "", status: "quente", service: "", payment: "", value: "", column: "novo",
+            name: "",
+            status: "quente",
+            service: "",
+            payment: "",
+            value: "",
+            column: (columns[0]?.id || "novo"),
         });
         setShowForm(false);
     };
 
     const moveTo = (id, columnId) => {
-        setLeads((prev) => prev.map((l) => (l.id === id ? {...l, column: columnId} : l)));
+        commit((prev) => prev.map((l) => (l.id === id ? { ...l, column: columnId } : l)));
     };
 
     const changeSector = (id, newSectorId) => {
-        setLeads((prev) => prev.map((l) => (l.id === id ? {...l, sector: newSectorId} : l)));
+        commit((prev) => prev.map((l) => (l.id === id ? { ...l, sector: newSectorId } : l)));
     };
 
-    // Drag & drop
     const onDragStart = (e, id) => {
         e.dataTransfer.setData("text/plain", id);
         e.dataTransfer.effectAllowed = "move";
@@ -161,289 +270,221 @@ export default function Board({
             setNewColName("");
             return;
         }
-        setColumns((prev) => [...prev, {id, title: name}]);
+        setColumns((prev) => [...prev, { id, title: name }]);
         setNewColName("");
     };
 
-    return (<div className="container">
-        <div
-            style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12,
-            }}
-        >
-            <div>
-                <button className="btn-ghost" onClick={onBack}>
-                    ← Voltar
-                </button>
-                <h2 style={{margin: "6px 0 0 8px"}}>{sectorTitle}</h2>
-                <div style={{color: "var(--muted)", fontSize: 13}}>
-                    Quadro estilo Kanban — contexto: {sectorId}
+    return (
+        <div className="container">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <div>
+                    <button className="btn-ghost" onClick={onBack}>← Voltar</button>
+                    <h2 style={{ margin: "6px 0 0 8px" }}>{sectorTitle}</h2>
+                    <div style={{ color: "var(--muted)", fontSize: 13 }}>Quadro — contexto: {sectorId}</div>
+                </div>
+
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    {sectorConfig.showValue && <div className="total-badge">Total: R$ {totalValue.toFixed(2)}</div>}
+                    <button className="btn-primary" onClick={() => setShowForm((s) => !s)}>
+                        {showForm ? "Fechar" : "Adicionar"}
+                    </button>
                 </div>
             </div>
 
-            <div style={{display: "flex", gap: 8, alignItems: "center"}}>
-                {sectorConfig.showValue && (
-                    <div className="total-badge">Total: R$ {totalValue.toFixed(2)}</div>
-                )}
-                <button className="btn-primary" onClick={() => setShowForm((s) => !s)}>
-                    {showForm ? "Fechar" : "Adicionar"}
-                </button>
-            </div>
-
-            <div className="card" style={{marginBottom: 12, padding: 16}}>
-                <div style={{display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap"}}>
+            <div className="card" style={{ marginBottom: 12, padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
                     <div>
-                        <h3 style={{margin: 0}}>{sectorConfig.title}</h3>
-                        <p style={{margin: "6px 0 0", color: "var(--muted)"}}>
-                            {sectorConfig.description}
-                        </p>
+                        <h3 style={{ margin: 0 }}>{sectorConfig.title}</h3>
+                        <p style={{ margin: "6px 0 0", color: "var(--muted)" }}>{sectorConfig.description}</p>
                     </div>
-                    {sectorId === "marketing" && (
-                        <div style={{display: "flex", gap: 12, flexWrap: "wrap"}}>
+
+                    {sectorConfig.showStatus && statusTotals && (
+                        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                             <div className="total-badge">Quentes: {statusTotals.quente}</div>
                             <div className="total-badge">Mornos: {statusTotals.morno}</div>
                             <div className="total-badge">Frios: {statusTotals.frio}</div>
                         </div>
                     )}
                 </div>
-
-                {sectorId === "marketing" && (
-                    <div style={{marginTop: 12}}>
-                        <div style={{fontSize: 12, color: "var(--muted)"}}>Serviços em destaque</div>
-                        <div style={{display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6}}>
-                            {Object.entries(serviceTotals).map(([service, count]) => (
-                                <span key={service} className="badge">
-                                    {service}: {count}
-                                </span>
-                            ))}
-                            {Object.keys(serviceTotals).length === 0 && (
-                                <span className="badge">Nenhum serviço cadastrado</span>
-                            )}
-                        </div>
-                    </div>
-                )}
             </div>
 
+            {showForm && (
+                <div className="card" style={{ marginBottom: 12 }}>
+                    <form className="form" onSubmit={addItem}>
+                        <label>{sectorConfig.nameLabel}</label>
+                        <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
 
-            {showForm && (<div className="card" style={{marginBottom: 12}}>
-                <form className="form" onSubmit={addLead}>
-                    <label>{sectorConfig.nameLabel}</label>
-                    <input
-                        value={form.name}
-                        onChange={(e) => setForm({...form, name: e.target.value})}
-                    />
-                    {sectorConfig.showStatus && (
-                        <>
-                            <label>Status</label>
-                            <select
-                                value={form.status}
-                                onChange={(e) => setForm({...form, status: e.target.value})}
-                            >
-                                <option value="quente">Quente</option>
-                                <option value="morno">Morno</option>
-                                <option value="frio">Frio</option>
-                            </select>
-                        </>
-                    )}
+                        {sectorConfig.showStatus && (
+                            <>
+                                <label>Status</label>
+                                <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                                    <option value="quente">Quente</option>
+                                    <option value="morno">Morno</option>
+                                    <option value="frio">Frio</option>
+                                </select>
+                            </>
+                        )}
 
-                    <label>{sectorConfig.serviceLabel}</label>
+                        <label>{sectorConfig.serviceLabel}</label>
+                        <input value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })} />
 
+                        <label>{sectorConfig.paymentLabel}</label>
+                        <input value={form.payment} onChange={(e) => setForm({ ...form, payment: e.target.value })} />
 
-                    <input
-                        value={form.service}
-                        onChange={(e) => setForm({...form, service: e.target.value})}
-                    />
+                        {sectorConfig.showValue && (
+                            <>
+                                <label>Valor (R$)</label>
+                                <input
+                                    value={form.value}
+                                    onChange={(e) => setForm({ ...form, value: e.target.value })}
+                                    type="number"
+                                    step="0.01"
+                                />
+                            </>
+                        )}
 
-                    <label>{sectorConfig.paymentLabel}</label>
-                    <input
-                        value={form.payment}
-                        onChange={(e) => setForm({...form, payment: e.target.value})}
-                    />
+                        <label>Coluna</label>
+                        <select value={form.column} onChange={(e) => setForm({ ...form, column: e.target.value })}>
+                            {columns.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                    {c.title}
+                                </option>
+                            ))}
+                        </select>
 
-                    {sectorConfig.showValue && (
-                        <>
-                            <label>Valor (R$)</label>
-                            <input
-                                value={form.value}
-                                onChange={(e) => setForm({...form, value: e.target.value})}
-                                type="number"
-                                step="0.01"
-                            />
-                        </>
-                    )}
+                        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                            <button className="btn-primary" type="submit">Adicionar</button>
+                            <button type="button" className="btn-ghost" onClick={() => setShowForm(false)}>Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            )}
 
-
-                    <label>Coluna</label>
-                    <select
-                        value={form.column}
-                        onChange={(e) => setForm({...form, column: e.target.value})}
-                    >
-                        {columns.map((c) => (<option key={c.id} value={c.id}>
-                            {c.title}
-                        </option>))}
-                    </select>
-
-                    <div style={{display: "flex", gap: 8, marginTop: 8}}>
-                        <button className="btn-primary" type="submit">
-                            Adicionar
-                        </button>
-                        <button
-                            type="button"
-                            className="btn-ghost"
-                            onClick={() => setShowForm(false)}
-                        >
-                            Cancelar
-                        </button>
-                    </div>
-                </form>
-            </div>)}
-
-            <div className="card" style={{marginBottom: 12}}>
-                <div style={{display: "flex", gap: 8, alignItems: "center"}}>
-                    <input
-                        placeholder="Nova coluna"
-                        value={newColName}
-                        onChange={(e) => setNewColName(e.target.value)}
-                    />
-                    <button className="btn-primary" onClick={addColumn}>
-                        Adicionar Coluna
-                    </button>
+            <div className="card" style={{ marginBottom: 12 }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input placeholder="Nova coluna" value={newColName} onChange={(e) => setNewColName(e.target.value)} />
+                    <button className="btn-primary" onClick={addColumn} type="button">Adicionar Coluna</button>
                 </div>
             </div>
 
-            <div
-                className="board"
-                style={{
-                    display: "grid", gridTemplateColumns: `repeat(${columns.length}, 1fr)`, gap: 12,
-                }}
-            >
+            <div className="board">
                 {columns.map((col) => {
                     const items = leads.filter((l) => l.column === col.id);
-                    const colTotal = items.reduce((s, l) => s + (Number(l.value) || 0), 0);
+                    const colTotal = sectorConfig.showValue
+                        ? items.reduce((s, l) => s + (Number(l.value) || 0), 0)
+                        : 0;
 
-                    return (<div
-                        key={col.id}
-                        className="column card"
-                        onDragOver={onDragOver}
-                        onDrop={(e) => onDropTo(e, col.id)}
-                        style={{padding: 12, minHeight: 200}}
-                    >
+                    return (
                         <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginBottom: 8,
-                            }}
+                            key={col.id}
+                            className="column card"
+                            onDragOver={onDragOver}
+                            onDrop={(e) => onDropTo(e, col.id)}
+                            style={{ padding: 12, minHeight: 200 }}
                         >
-                            <h3 style={{margin: 0}}>{col.title}</h3>
-                            <div style={{textAlign: "right", fontSize: 12, color: "var(--muted)"}}>
-                                <div>
-                                    {items.length} {items.length === 1 ? "lead" : "leads"}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                                <h3 style={{ margin: 0 }}>{col.title}</h3>
+                                <div style={{ textAlign: "right", fontSize: 12, color: "var(--muted)" }}>
+                                    <div>{items.length} {items.length === 1 ? "item" : "itens"}</div>
+                                    {sectorConfig.showValue && <div>R$ {colTotal.toFixed(2)}</div>}
                                 </div>
-                                {sectorConfig.showValue && <div>R$ {colTotal.toFixed(2)}</div>}
                             </div>
-                        </div>
 
-                        <div style={{display: "flex", flexDirection: "column", gap: 10}}>
-                            {items.map((l) => (<div
-                                key={l.id}
-                                draggable
-                                onDragStart={(e) => onDragStart(e, l.id)}
-                                className="lead-card"
-                                style={{
-                                    padding: 10,
-                                    borderRadius: 8,
-                                    background: "#fff",
-                                    boxShadow: "var(--shadow)",
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "flex-start",
-                                }}
-                            >
-                                <div style={{flex: 1, marginRight: 8}}>
-                                    <div style={{fontWeight: 700}}>{l.name}</div>
-                                    <div style={{color: "var(--muted)", fontSize: 13, marginTop: 6}}>
-                                        {l.service || "—"}
-                                        {sectorConfig.showStatus && (
-                                            <>
-                                                {" "}
-                                                ·{" "}
-                                                <span
-                                                    style={{
-                                                        background: statusColor(l.status),
-                                                        padding: "2px 8px",
-                                                        borderRadius: 999,
-                                                        fontWeight: 600,
+                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                                {items.map((l) => (
+                                    <div
+                                        key={l.id}
+                                        draggable
+                                        onDragStart={(e) => onDragStart(e, l.id)}
+                                        className="lead-card"
+                                        style={{
+                                            padding: 10,
+                                            borderRadius: 8,
+                                            background: "#fff",
+                                            boxShadow: "var(--shadow)",
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "flex-start",
+                                        }}
+                                    >
+                                        <div style={{ flex: 1, marginRight: 8 }}>
+                                            <div style={{ fontWeight: 700 }}>{l.name}</div>
+
+                                            <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 6 }}>
+                                                {l.service || "—"}
+                                                {sectorConfig.showStatus && l.status && (
+                                                    <>
+                                                        {" "}·{" "}
+                                                        <span
+                                                            style={{
+                                                                background: statusColor(l.status),
+                                                                padding: "2px 8px",
+                                                                borderRadius: 999,
+                                                                fontWeight: 600,
+                                                            }}
+                                                        >
+                              {l.status}
+                            </span>
+                                                    </>
+                                                )}
+                                                {" "}· {l.payment || "—"}
+                                            </div>
+
+                                            <div style={{ marginTop: 8 }}>
+                                                <label style={{ fontSize: 12, color: "var(--muted)" }}>Mover para setor</label>
+                                                <div>
+                                                    <select value={l.sector || sectorId} onChange={(e) => changeSector(l.id, e.target.value)}>
+                                                        <option value={sectorId}>{sectorTitle}</option>
+                                                        {sectors.map((s) => (
+                                                            <option key={s.id} value={s.id}>{s.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ textAlign: "right", minWidth: 120 }}>
+                                            {sectorConfig.showValue && (
+                                                <div style={{ fontWeight: 800 }}>R$ {(Number(l.value) || 0).toFixed(2)}</div>
+                                            )}
+
+                                            <div style={{ display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end" }}>
+                                                <button
+                                                    className="btn-ghost"
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const idx = columns.findIndex((c) => c.id === l.column);
+                                                        moveTo(l.id, columns[Math.max(0, idx - 1)].id);
                                                     }}
+                                                    disabled={columns[0].id === l.column}
                                                 >
-                                                            {l.status}
-                                                        </span>
-                                            </>
-                                        )}{" "}
+                                                    ◀
+                                                </button>
 
-
-                                        · {l.payment || "—"}
-                                    </div>
-
-                                    <div style={{marginTop: 8}}>
-                                        <label style={{fontSize: 12, color: "var(--muted)"}}>
-                                            Mover para setor
-                                        </label>
-                                        <div>
-                                            <select
-                                                value={l.sector || sectorId}
-                                                onChange={(e) => changeSector(l.id, e.target.value)}
-                                            >
-                                                <option value={sectorId}>{sectorTitle}</option>
-                                                {sectors.map((s) => (<option key={s.id} value={s.id}>
-                                                    {s.label}
-                                                </option>))}
-                                            </select>
+                                                <button
+                                                    className="btn-ghost"
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const idx = columns.findIndex((c) => c.id === l.column);
+                                                        moveTo(l.id, columns[Math.min(columns.length - 1, idx + 1)].id);
+                                                    }}
+                                                    disabled={columns[columns.length - 1].id === l.column}
+                                                >
+                                                    ▶
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                ))}
 
-                                <div style={{textAlign: "right", minWidth: 120}}>
-                                    <div style={{fontWeight: 800}}>
-                                        R$ {(Number(l.value) || 0).toFixed(2)}
-                                    </div>
-
-                                    <div style={{
-                                        display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end"
-                                    }}>
-                                        <button
-                                            className="btn-ghost"
-                                            onClick={() => {
-                                                const idx = columns.findIndex((c) => c.id === l.column);
-                                                moveTo(l.id, columns[Math.max(0, idx - 1)].id);
-                                            }}
-                                            disabled={columns[0].id === l.column}
-                                        >
-                                            ◀
-                                        </button>
-
-                                        <button
-                                            className="btn-ghost"
-                                            onClick={() => {
-                                                const idx = columns.findIndex((c) => c.id === l.column);
-                                                moveTo(l.id, columns[Math.min(columns.length - 1, idx + 1)].id);
-                                            }}
-                                            disabled={columns[columns.length - 1].id === l.column}
-                                        >
-                                            ▶
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>))}
-
-                            {items.length === 0 && (<div style={{color: "var(--muted)", fontSize: 13}}>
-                                Nenhum lead nesta coluna
-                            </div>)}
+                                {items.length === 0 && (
+                                    <div style={{ color: "var(--muted)", fontSize: 13 }}>Nenhum item nesta coluna</div>
+                                )}
+                            </div>
                         </div>
-                    </div>);
+                    );
                 })}
             </div>
         </div>
-    </div>
-)};
+    );
+}
