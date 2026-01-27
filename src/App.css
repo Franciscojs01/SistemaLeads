@@ -151,3 +151,16 @@ body{
 .lead-row {
     margin-bottom: 8px
 }
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(96,165,250,0.12);
+    border: 1px solid rgba(96,165,250,0.25);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+}
