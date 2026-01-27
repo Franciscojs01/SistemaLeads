@@ -62,6 +62,72 @@ const SECTOR_CONFIG = {
 };
 
 
+const SECTOR_CONFIG = {
+    marketing: {
+        title: "Marketing",
+        description: "Visibilidade dos leads quentes, mornos e serviços ativos.",
+        nameLabel: "Lead/Empresa",
+        serviceLabel: "Serviço",
+        paymentLabel: "Origem do lead",
+        showStatus: true,
+        showValue: true,
+    },
+    presidencia: {
+        title: "Presidência",
+        description: "Controle das demandas e parcerias estratégicas.",
+        nameLabel: "Demanda estratégica",
+        serviceLabel: "Parceiro",
+        paymentLabel: "Tipo de demanda",
+        showStatus: true,
+        showValue: true,
+    },
+    vp: {
+        title: "VP",
+        description: "Gestão de pessoas e estratégias. Sugestões: 1:1, trilhas, OKRs e planos de sucessão.",
+        nameLabel: "Iniciativa",
+        serviceLabel: "Gestão de pessoas",
+        paymentLabel: "Gestão de estratégias",
+        showStatus: false,
+        showValue: false,
+    },
+    adm_fin: {
+        title: "ADM Financeiro",
+        description: "Resumo de movimentações financeiras e pagamentos.",
+        nameLabel: "Movimentação",
+        serviceLabel: "Categoria financeira",
+        paymentLabel: "Forma de pagamento",
+        showStatus: false,
+        showValue: true,
+    },
+    projetos: {
+        title: "Projetos",
+        description: "Demandas organizadas por cliente e entregas.",
+        nameLabel: "Demanda do projeto",
+        serviceLabel: "Cliente",
+        paymentLabel: "Escopo/entrega",
+        showStatus: false,
+        showValue: false,
+    },
+    comercial: {
+        title: "Comercial",
+        description: "Propostas jurídicas, contratos em andamento e expansão de contas.",
+        nameLabel: "Caso/Cliente",
+        serviceLabel: "Área jurídica",
+        paymentLabel: "Origem do cliente",
+        showStatus: true,
+        showValue: true,
+    },
+    geral: {
+        title: "Quadro",
+        description: "Acompanhe as atividades do setor.",
+        nameLabel: "Título",
+        serviceLabel: "Serviço",
+        paymentLabel: "Detalhe",
+        showStatus: true,
+        showValue: true,
+    },
+};
+
 export default function Board({
                                   sectorId = "geral", sectorTitle = "Quadro", initialLeads = [], onBack, sectors = [],
                               }) {
@@ -106,6 +172,27 @@ export default function Board({
     }, [leads]);
 
 
+    const sectorConfig = SECTOR_CONFIG[sectorId] || SECTOR_CONFIG.geral;
+
+    const statusTotals = useMemo(() => {
+        return leads.reduce(
+            (acc, lead) => {
+                const key = lead.status || "frio";
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+            },
+            {quente: 0, morno: 0, frio: 0}
+        );
+    }, [leads]);
+
+    const serviceTotals = useMemo(() => {
+        return leads.reduce((acc, lead) => {
+            const key = lead.service?.trim() || "Sem serviço";
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+    }, [leads]);
+
     const addLead = (e) => {
         e?.preventDefault();
         if (!form.name.trim()) return;
@@ -116,7 +203,7 @@ export default function Board({
             status: form.status,
             service: form.service,
             payment: form.payment,
-            value: Number(form.value || 0),
+            value: sectorConfig.showValue ? Number(form.value || 0) : 0,
             column: form.column || "novo",
             sector: sectorId,
         };
@@ -178,9 +265,11 @@ export default function Board({
                 </div>
 
                 <div style={{display: "flex", gap: 8, alignItems: "center"}}>
-                    <div className="total-badge">Total: R$ {totalValue.toFixed(2)}</div>
+                    {sectorConfig.showValue && (
+                        <div className="total-badge">Total: R$ {totalValue.toFixed(2)}</div>
+                    )}
                     <button className="btn-primary" onClick={() => setShowForm((s) => !s)}>
-                        {showForm ? "Fechar" : "Adicionar Lead"}
+                        {showForm ? "Fechar" : "Adicionar"}
                     </button>
                 </div>
 
@@ -249,13 +338,17 @@ export default function Board({
                             onChange={(e) => setForm({...form, payment: e.target.value})}
                         />
 
-                        <label>Valor (R$)</label>
-                        <input
-                            value={form.value}
-                            onChange={(e) => setForm({...form, value: e.target.value})}
-                            type="number"
-                            step="0.01"
-                        />
+                        {sectorConfig.showValue && (
+                            <>
+                                <label>Valor (R$)</label>
+                                <input
+                                    value={form.value}
+                                    onChange={(e) => setForm({...form, value: e.target.value})}
+                                    type="number"
+                                    step="0.01"
+                                />
+                            </>
+                        )}
 
                         <label>Coluna</label>
                         <select
@@ -325,7 +418,7 @@ export default function Board({
                                     <div>
                                         {items.length} {items.length === 1 ? "lead" : "leads"}
                                     </div>
-                                    <div>R$ {colTotal.toFixed(2)}</div>
+                                    {sectorConfig.showValue && <div>R$ {colTotal.toFixed(2)}</div>}
                                 </div>
                             </div>
 
@@ -388,9 +481,11 @@ export default function Board({
                                         </div>
 
                                         <div style={{textAlign: "right", minWidth: 120}}>
-                                            <div style={{fontWeight: 800}}>
-                                                R$ {(Number(l.value) || 0).toFixed(2)}
-                                            </div>
+                                            {sectorConfig.showValue && (
+                                                <div style={{fontWeight: 800}}>
+                                                    R$ {(Number(l.value) || 0).toFixed(2)}
+                                                </div>
+                                            )}
 
                                             <div style={{
                                                 display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end"
