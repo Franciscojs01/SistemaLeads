@@ -8,6 +8,7 @@ const SECTORS = [
     {id: "adm_fin", title: "ADM Financeiro", desc: "Fluxo financeiro e orçamento"},
     {id: "projetos", title: "Projetos", desc: "Demandas organizadas por cliente"},
     {id: "comercial", title: "Comercial", desc: "Pipeline comercial e oportunidades"},
+
 ];
 
 export default function Dashboard({onOpenSector}) {

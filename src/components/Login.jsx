@@ -32,7 +32,7 @@ export default function Login({ onLogin, onRegister }) {
                     <label>Senha</label>
                     <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="senha" />
 
-                    <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 , flexWrap: "wrap" }}>
                         <button className="btn-primary" type="submit">Entrar</button>
                         <button type="button" className="btn-ghost" onClick={() => { setEmail(""); setPassword(""); }}>Limpar</button>
                         <button type="button" className="btn-ghost" onClick={onRegister}>

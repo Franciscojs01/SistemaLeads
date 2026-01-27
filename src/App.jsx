@@ -18,7 +18,6 @@ const SECTORS = [
     {id: "comercial", label: "Comercial"},
 ];
 
-// opcional (mas ajuda muito): persistência
 const STORAGE_KEY = "animus_leads_v1";
 
 export default function App() {
@@ -55,16 +54,17 @@ export default function App() {
     }
 
     function handleNavigate(target) {
-            const map = {
-                controle: "control",
-                financeiro: "finance",
-                finance: "finance",
-                cadastro: "cadastro",
-                register: "register",
-                home: "home",
-            };
-            setPage(map[target] || target);
-        }
+        const map = {
+            controle: "control",
+            financeiro: "finance",
+            finance: "finance",
+            cadastro: "cadastro",
+            register: "register",
+            home: "home",
+        };
+
+        setPage(map[target] || target);
+    }
 
     function openSector(sectorId) {
         setActiveSector(sectorId); // <- SEMPRE ID (ex: "marketing")
