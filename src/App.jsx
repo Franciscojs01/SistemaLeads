@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "./components/NavBar.jsx";
 import Login from "./components/Login.jsx";
 import LeadForm from "./components/LeadForm.jsx";
@@ -9,14 +9,13 @@ import Board from "./components/Board.jsx";
 import "./App.css";
 
 const SECTORS = [
-    {id: "marketing", label: "Marketing"},
-    {id: "presidencia", label: "Presidência"},
-    {id: "projetos", label: "Projetos"},
-    {id: "gestao_pessoas", label: "Gestão de Pessoas"},
-    {id: "financeiro", label: "Financeiro"},
+    { id: "marketing", label: "Marketing" },
+    { id: "presidencia", label: "Presidência" },
+    { id: "projetos", label: "Projetos" },
+    { id: "gestao_pessoas", label: "Gestão de Pessoas" },
+    { id: "financeiro", label: "Financeiro" },
 ];
 
-// opcional (mas ajuda muito): persistência
 const STORAGE_KEY = "animus_leads_v1";
 
 export default function App() {
@@ -55,21 +54,23 @@ export default function App() {
             finance: "finance",
             cadastro: "cadastro",
             home: "home",
+            board: "board",
         };
         setPage(map[target] || target);
     }
 
     function openSector(sectorId) {
-        setActiveSector(sectorId); // <- SEMPRE ID (ex: "marketing")
+        setActiveSector(sectorId);
         setPage("board");
     }
 
     function addLead(lead) {
-        // Normaliza: sempre salva com ID do setor
         const sectorId = activeSector || lead.sector || "geral";
 
         const newLead = {
-            id: crypto?.randomUUID?.() ?? Date.now().toString(),
+            id:
+                (globalThis.crypto && crypto.randomUUID && crypto.randomUUID()) ||
+                `${Date.now()}_${Math.random().toString(16).slice(2)}`,
             ...lead,
             sector: sectorId,
             column: lead.column || "novo",
@@ -95,12 +96,12 @@ export default function App() {
 
     return (
         <div className="app-root">
-            {user && <Navbar user={user} onNavigate={handleNavigate} onLogout={handleLogout}/>}
+            {user && <Navbar user={user} onNavigate={handleNavigate} onLogout={handleLogout} />}
 
             <main className="container">
-                {!user && page === "login" && <Login onLogin={handleLogin}/>}
+                {!user && page === "login" && <Login onLogin={handleLogin} />}
 
-                {user && page === "home" && <Dashboard onOpenSector={openSector}/>}
+                {user && page === "home" && <Dashboard onOpenSector={openSector} />}
 
                 {user && page === "board" && (
                     <Board
@@ -109,7 +110,6 @@ export default function App() {
                         initialLeads={leadsForActiveSector}
                         onBack={() => setPage("home")}
                         onChange={(changed) => {
-                            // remove só os leads do setor ativo e repõe com o que veio do board
                             const others = leads.filter((l) => l.sector !== activeSector);
                             setLeads([...others, ...changed]);
                         }}
@@ -127,11 +127,11 @@ export default function App() {
                 {user && page === "control" && (
                     <div className="page">
                         <h2>Controle</h2>
-                        <LeadList leads={leads}/>
+                        <LeadList leads={leads} />
                     </div>
                 )}
 
-                {user && page === "finance" && <Financeiro leads={leads}/>}
+                {user && page === "finance" && <Financeiro leads={leads} />}
             </main>
 
             <footer className="footer">© animus · Empresa Júnior de Advocacia</footer>

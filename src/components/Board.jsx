@@ -1,18 +1,12 @@
 import React, {useEffect, useMemo, useState} from "react";
 import "../index.css";
 
-const DEFAULT_COLUMNS = [
-    {id: "novo", title: "Novo"},
-    {id: "em_progresso", title: "Em Progresso"},
-    {id: "concluido", title: "Concluído"},
-];
+const DEFAULT_COLUMNS = [{id: "novo", title: "Novo"}, {id: "em_progresso", title: "Em Progresso"}, {
+    id: "concluido",
+    title: "Concluído"
+},];
 
-const statusColor = (s) =>
-    s === "quente"
-        ? "rgba(255,88,88,0.12)"
-        : s === "morno"
-            ? "rgba(255,186,59,0.12)"
-            : "rgba(102,126,234,0.08)";
+const statusColor = (s) => s === "quente" ? "rgba(255,88,88,0.12)" : s === "morno" ? "rgba(255,186,59,0.12)" : "rgba(102,126,234,0.08)";
 
 const SECTOR_CONFIG = {
     marketing: {
@@ -35,7 +29,8 @@ const SECTOR_CONFIG = {
     },
     vp: {
         title: "VP",
-        description: "Gestão de pessoas e estratégias. Sugestões: 1:1, trilhas, OKRs e planos de sucessão.",
+        description:
+            "Gestão de pessoas e estratégias. Sugestões: 1:1, trilhas, OKRs e planos de sucessão.",
         nameLabel: "Iniciativa",
         serviceLabel: "Gestão de pessoas",
         paymentLabel: "Gestão de estratégias",
@@ -81,34 +76,27 @@ const SECTOR_CONFIG = {
 };
 
 export default function Board({
-                                  sectorId = "geral",
-                                  sectorTitle = "Quadro",
-                                  initialLeads = [],
-                                  onBack,
-                                  onChange,
-                                  sectors = [],
+                                  sectorId = "geral", sectorTitle = "Quadro", initialLeads = [], onBack, sectors = [],
                               }) {
     const [leads, setLeads] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({
-        name: "",
-        status: "quente",
-        service: "",
-        payment: "",
-        value: "",
-        column: "novo",
+        name: "", status: "quente", service: "", payment: "", value: "", column: "novo",
     });
 
     const [columns, setColumns] = useState(DEFAULT_COLUMNS);
     const [newColName, setNewColName] = useState("");
 
+    const sectorConfig = SECTOR_CONFIG[sectorId] || SECTOR_CONFIG.geral;
 
+    // sincroniza quando trocar de setor ou quando o App mandar leads novos
     useEffect(() => {
         const normalized = (initialLeads || []).map((l) => ({
             ...l,
             sector: l.sector ?? sectorId,
             column: l.column || "novo",
             value: Number(l.value || 0),
+            status: l.status || "frio",
         }));
 
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -116,22 +104,15 @@ export default function Board({
     }, [initialLeads, sectorId]);
 
 
-    const totalValue = useMemo(
-        () => leads.reduce((s, l) => s + (Number(l.value) || 0), 0),
-        [leads]
-    );
 
-    const sectorConfig = SECTOR_CONFIG[sectorId] || SECTOR_CONFIG.geral;
+    const totalValue = useMemo(() => leads.reduce((s, l) => s + (Number(l.value) || 0), 0), [leads]);
 
     const statusTotals = useMemo(() => {
-        return leads.reduce(
-            (acc, lead) => {
-                const key = lead.status || "frio";
-                acc[key] = (acc[key] || 0) + 1;
-                return acc;
-            },
-            {quente: 0, morno: 0, frio: 0}
-        );
+        return leads.reduce((acc, lead) => {
+            const key = lead.status || "frio";
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {quente: 0, morno: 0, frio: 0});
     }, [leads]);
 
     const serviceTotals = useMemo(() => {
@@ -144,41 +125,18 @@ export default function Board({
 
     const addLead = (e) => {
         e?.preventDefault();
-        if (!form.name.trim()) return;
-
-        const newLead = {
-            id: crypto?.randomUUID?.() ?? Date.now().toString(),
-            name: form.name.trim(),
-            status: form.status,
-            service: form.service,
-            payment: form.payment,
-            value: sectorConfig.showValue ? Number(form.value || 0) : 0,
-            column: form.column || "novo",
-            sector: sectorId,
-        };
 
         setLeads((prev) => [newLead, ...prev]);
-        setForm({
-            name: "",
-            status: "quente",
-            service: "",
-            payment: "",
-            value: "",
-            column: "novo",
-        });
+        setForm({name: "", status: "quente", service: "", payment: "", value: "", column: "novo"});
         setShowForm(false);
     };
 
     const moveTo = (id, columnId) => {
-        setLeads((prev) =>
-            prev.map((l) => (l.id === id ? {...l, column: columnId} : l))
-        );
-    };
+        setLeads((prev) => prev.map((l) => (l.id === id ? {...l, column: columnId} : l)));
+    }
 
     const changeSector = (id, newSectorId) => {
-        setLeads((prev) =>
-            prev.map((l) => (l.id === id ? {...l, sector: newSectorId} : l))
-        );
+        setLeads((prev) => prev.map((l) => (l.id === id ? {...l, sector: newSectorId} : l)));
     };
 
     // Drag & drop
@@ -197,6 +155,7 @@ export default function Board({
     const addColumn = () => {
         const name = newColName.trim();
         if (!name) return;
+
         const id = name.toLowerCase().replace(/\s+/g, "_");
         if (columns.some((c) => c.id === id)) {
             setNewColName("");
@@ -206,8 +165,7 @@ export default function Board({
         setNewColName("");
     };
 
-    return (
-        <div className="container">
+    return (<div className="container">
             <div
                 style={{
                     display: "flex",
@@ -236,36 +194,64 @@ export default function Board({
                 </div>
             </div>
 
+            <div className="card" style={{marginBottom: 12, padding: 16}}>
+                <div style={{display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap"}}>
+                    <div>
+                        <h3 style={{margin: 0}}>{sectorConfig.title}</h3>
+                        <p style={{margin: "6px 0 0", color: "var(--muted)"}}>
+                            {sectorConfig.description}
+                        </p>
+                    </div>
+
+                    {sectorId === "marketing" && statusTotals && (
+                        <div style={{display: "flex", gap: 12, flexWrap: "wrap"}}>
+                            <div className="total-badge">Quentes: {statusTotals.quente}</div>
+                            <div className="total-badge">Mornos: {statusTotals.morno}</div>
+                            <div className="total-badge">Frios: {statusTotals.frio}</div>
+                        </div>
+                    )}
+                </div>
+
+                {sectorId === "marketing" && serviceTotals && (
+                    <div style={{marginTop: 12}}>
+                        <div style={{fontSize: 12, color: "var(--muted)"}}>Serviços em destaque</div>
+                        <div style={{display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6}}>
+                            {Object.entries(serviceTotals).map(([service, count]) => (
+                                <span key={service} className="badge">
+                  {service}: {count}
+                </span>
+                            ))}
+                            {Object.keys(serviceTotals).length === 0 && (
+                                <span className="badge">Nenhum serviço cadastrado</span>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
             {showForm && (
                 <div className="card" style={{marginBottom: 12}}>
                     <form className="form" onSubmit={addLead}>
-                        <label>Nome do Lead</label>
-                        <input
-                            value={form.name}
-                            onChange={(e) => setForm({...form, name: e.target.value})}
-                        />
+                        <label>{sectorConfig.nameLabel}</label>
+                        <input value={form.name} onChange={(e) => setForm({...form, name: e.target.value})}/>
 
-                        <label>Status</label>
-                        <select
-                            value={form.status}
-                            onChange={(e) => setForm({...form, status: e.target.value})}
-                        >
-                            <option value="quente">Quente</option>
-                            <option value="morno">Morno</option>
-                            <option value="frio">Frio</option>
-                        </select>
+                        {sectorConfig.showStatus && (
+                            <>
+                                <label>Status</label>
+                                <select value={form.status}
+                                        onChange={(e) => setForm({...form, status: e.target.value})}>
+                                    <option value="quente">Quente</option>
+                                    <option value="morno">Morno</option>
+                                    <option value="frio">Frio</option>
+                                </select>
+                            </>
+                        )}
 
-                        <label>Serviço</label>
-                        <input
-                            value={form.service}
-                            onChange={(e) => setForm({...form, service: e.target.value})}
-                        />
+                        <label>{sectorConfig.serviceLabel}</label>
+                        <input value={form.service} onChange={(e) => setForm({...form, service: e.target.value})}/>
 
-                        <label>Forma de Pagamento</label>
-                        <input
-                            value={form.payment}
-                            onChange={(e) => setForm({...form, payment: e.target.value})}
-                        />
+                        <label>{sectorConfig.paymentLabel}</label>
+                        <input value={form.payment} onChange={(e) => setForm({...form, payment: e.target.value})}/>
 
                         {sectorConfig.showValue && (
                             <>
@@ -280,10 +266,7 @@ export default function Board({
                         )}
 
                         <label>Coluna</label>
-                        <select
-                            value={form.column}
-                            onChange={(e) => setForm({...form, column: e.target.value})}
-                        >
+                        <select value={form.column} onChange={(e) => setForm({...form, column: e.target.value})}>
                             {columns.map((c) => (
                                 <option key={c.id} value={c.id}>
                                     {c.title}
@@ -295,11 +278,7 @@ export default function Board({
                             <button className="btn-primary" type="submit">
                                 Adicionar
                             </button>
-                            <button
-                                type="button"
-                                className="btn-ghost"
-                                onClick={() => setShowForm(false)}
-                            >
+                            <button type="button" className="btn-ghost" onClick={() => setShowForm(false)}>
                                 Cancelar
                             </button>
                         </div>
@@ -314,7 +293,7 @@ export default function Board({
                         value={newColName}
                         onChange={(e) => setNewColName(e.target.value)}
                     />
-                    <button className="btn-primary" onClick={addColumn}>
+                    <button className="btn-primary" onClick={addColumn} type="button">
                         Adicionar Coluna
                     </button>
                 </div>
@@ -376,19 +355,27 @@ export default function Board({
                                     >
                                         <div style={{flex: 1, marginRight: 8}}>
                                             <div style={{fontWeight: 700}}>{l.name}</div>
+
                                             <div style={{color: "var(--muted)", fontSize: 13, marginTop: 6}}>
-                                                {l.service || "—"} ·{" "}
-                                                <span
-                                                    style={{
-                                                        background: statusColor(l.status),
-                                                        padding: "2px 8px",
-                                                        borderRadius: 999,
-                                                        fontWeight: 600,
-                                                    }}
-                                                >
-                          {l.status}
-                        </span>{" "}
-                                                · {l.payment || "—"}
+                                                {l.service || "—"}
+
+                                                {sectorConfig.showStatus && (
+                                                    <>
+                                                        {" "}·{" "}
+                                                        <span
+                                                            style={{
+                                                                background: statusColor(l.status),
+                                                                padding: "2px 8px",
+                                                                borderRadius: 999,
+                                                                fontWeight: 600,
+                                                            }}
+                                                        >
+                              {l.status}
+                            </span>
+                                                    </>
+                                                )}
+
+                                                {" "}· {l.payment || "—"}
                                             </div>
 
                                             <div style={{marginTop: 8}}>
@@ -426,6 +413,7 @@ export default function Board({
                                             }}>
                                                 <button
                                                     className="btn-ghost"
+                                                    type="button"
                                                     onClick={() => {
                                                         const idx = columns.findIndex((c) => c.id === l.column);
                                                         moveTo(l.id, columns[Math.max(0, idx - 1)].id);
@@ -437,6 +425,7 @@ export default function Board({
 
                                                 <button
                                                     className="btn-ghost"
+                                                    type="button"
                                                     onClick={() => {
                                                         const idx = columns.findIndex((c) => c.id === l.column);
                                                         moveTo(l.id, columns[Math.min(columns.length - 1, idx + 1)].id);
