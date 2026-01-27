@@ -5,9 +5,9 @@ const SECTORS = [
     { id: "marketing", title: "Marketing", desc: "Atração e qualificação de leads (topo de funil)." },
     { id: "comercial", title: "Comercial Jurídico", desc: "Pipeline de propostas e contratos (advocacia)." },
     { id: "presidencia", title: "Presidência", desc: "Demandas estratégicas e parcerias." },
-    { id: "projetos", title: "Projetos", desc: "Demandas por cliente e entregas (kanban por fase)." },
+    { id: "projetos", title: "Projetos", desc: "Demandas por cliente e entregas." },
     { id: "gestao_pessoas", title: "Gestão de Pessoas", desc: "1:1, onboarding, feedbacks e desenvolvimento." },
-    { id: "gestao_estrategias", title: "Gestão de Estratégias", desc: "OKRs, iniciativas e metas (do idea ao concluído)." },
+    { id: "gestao_estrategias", title: "Gestão de Estratégias", desc: "OKRs, iniciativas e metas." },
     { id: "adm_fin", title: "ADM Financeiro", desc: "Pagamentos e recebimentos (previsto, em aberto, pago, atrasado)." },
 ];
 
