@@ -1,7 +1,6 @@
 import React, {useEffect, useMemo, useState} from "react";
 import Navbar from "./components/NavBar.jsx";
 import Login from "./components/Login.jsx";
-import Register from "./components/Register.jsx";
 import LeadForm from "./components/LeadForm.jsx";
 import LeadList from "./components/LeadList.jsx";
 import Financeiro from "./components/Financeiro.jsx";
@@ -12,12 +11,12 @@ import "./App.css";
 const SECTORS = [
     {id: "marketing", label: "Marketing"},
     {id: "presidencia", label: "Presidência"},
-    {id: "vp", label: "VP"},
-    {id: "adm_fin", label: "ADM Financeiro"},
     {id: "projetos", label: "Projetos"},
-    {id: "comercial", label: "Comercial"},
+    {id: "gestao_pessoas", label: "Gestão de Pessoas"},
+    {id: "financeiro", label: "Financeiro"},
 ];
 
+// opcional (mas ajuda muito): persistência
 const STORAGE_KEY = "animus_leads_v1";
 
 export default function App() {
@@ -43,10 +42,6 @@ export default function App() {
         setPage("home");
     }
 
-    function handleRegister() {
-        setPage("login");
-    }
-
     function handleLogout() {
         setUser(null);
         setActiveSector(null);
@@ -59,10 +54,8 @@ export default function App() {
             financeiro: "finance",
             finance: "finance",
             cadastro: "cadastro",
-            register: "register",
             home: "home",
         };
-
         setPage(map[target] || target);
     }
 
@@ -105,11 +98,7 @@ export default function App() {
             {user && <Navbar user={user} onNavigate={handleNavigate} onLogout={handleLogout}/>}
 
             <main className="container">
-                {!user && page === "login" && (
-                    <Login onLogin={handleLogin} onRegister={() => setPage("register")}/>
-                )}
-
-                {!user && page === "register" && <Register onRegister={handleRegister}/>}
+                {!user && page === "login" && <Login onLogin={handleLogin}/>}
 
                 {user && page === "home" && <Dashboard onOpenSector={openSector}/>}
 
