@@ -90,12 +90,16 @@ export default function Board({
     const sectorConfig = SECTOR_CONFIG[sectorId] || SECTOR_CONFIG.geral;
 
     const statusTotals = useMemo(() => {
-        return leads.reduce((acc, lead) => {
-            const key = lead.status || "frio";
-            acc[key] = (acc[key] || 0) + 1;
-            return acc;
-        }, {quente: 0, morno: 0, frio: 0});
+        return leads.reduce(
+            (acc, lead) => {
+                const key = lead.status || "frio";
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+            },
+            {quente: 0, morno: 0, frio: 0}
+        );
     }, [leads]);
+
 
     const serviceTotals = useMemo(() => {
         return leads.reduce((acc, lead) => {
@@ -116,7 +120,7 @@ export default function Board({
             status: form.status,
             service: form.service,
             payment: form.payment,
-            value: Number(form.value || 0),
+            value: sectorConfig.showValue ? Number(form.value || 0) : 0,
             column: form.column || "novo",
             sector: sectorId,
         };
@@ -162,125 +166,137 @@ export default function Board({
     };
 
     return (<div className="container">
-            <div
-                style={{
-                    display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12,
-                }}
-            >
-                <div>
-                    <button className="btn-ghost" onClick={onBack}>
-                        ← Voltar
-                    </button>
-                    <h2 style={{margin: "6px 0 0 8px"}}>{sectorTitle}</h2>
-                    <div style={{color: "var(--muted)", fontSize: 13}}>
-                        Quadro estilo Kanban — contexto: {sectorId}
-                    </div>
+        <div
+            style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12,
+            }}
+        >
+            <div>
+                <button className="btn-ghost" onClick={onBack}>
+                    ← Voltar
+                </button>
+                <h2 style={{margin: "6px 0 0 8px"}}>{sectorTitle}</h2>
+                <div style={{color: "var(--muted)", fontSize: 13}}>
+                    Quadro estilo Kanban — contexto: {sectorId}
                 </div>
-
-                <div style={{display: "flex", gap: 8, alignItems: "center"}}>
-                    <div className="total-badge">Total: R$ {totalValue.toFixed(2)}</div>
-                    <button className="btn-primary" onClick={() => setShowForm((s) => !s)}>
-                        {showForm ? "Fechar" : "Adicionar Lead"}
-                    </button>
-                </div>
-
-                <div className="card" style={{marginBottom: 12, padding: 16}}>
-                    <div style={{display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap"}}>
-                        <div>
-                            <h3 style={{margin: 0}}>{sectorConfig.title}</h3>
-                            <p style={{margin: "6px 0 0", color: "var(--muted)"}}>
-                                {sectorConfig.description}
-                            </p>
-                        </div>
-                        {sectorId === "marketing" && (<div style={{display: "flex", gap: 12, flexWrap: "wrap"}}>
-                                <div className="total-badge">Quentes: {statusTotals.quente}</div>
-                                <div className="total-badge">Mornos: {statusTotals.morno}</div>
-                                <div className="total-badge">Frios: {statusTotals.frio}</div>
-                            </div>)}
-                    </div>
-
-                    {sectorId === "marketing" && (<div style={{marginTop: 12}}>
-                            <div style={{fontSize: 12, color: "var(--muted)"}}>Serviços em destaque</div>
-                            <div style={{display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6}}>
-                                {Object.entries(serviceTotals).map(([service, count]) => (
-                                    <span key={service} className="badge">
-                                    {service}: {count}
-                                </span>))}
-                                {Object.keys(serviceTotals).length === 0 && (
-                                    <span className="badge">Nenhum serviço cadastrado</span>)}
-                            </div>
-                        </div>)}
-                </div>
-
             </div>
 
-            {showForm && (<div className="card" style={{marginBottom: 12}}>
-                    <form className="form" onSubmit={addLead}>
-                        <label>{sectorConfig.nameLabel}</label>
-                        <input
-                            value={form.name}
-                            onChange={(e) => setForm({...form, name: e.target.value})}
-                        />
-                        {sectorConfig.showStatus && (
-                            <>
-                                <label>Status</label>
-                                <select
-                                    value={form.status}
-                                    onChange={(e) => setForm({...form, status: e.target.value})}
-                                >
-                                    <option value="quente">Quente</option>
-                                    <option value="morno">Morno</option>
-                                    <option value="frio">Frio</option>
-                                </select>
-                            </>
-                        )}
+            <div style={{display: "flex", gap: 8, alignItems: "center"}}>
+                {sectorConfig.showValue && (
+                    <div className="total-badge">Total: R$ {totalValue.toFixed(2)}</div>
+                )}
+                <button className="btn-primary" onClick={() => setShowForm((s) => !s)}>
+                    {showForm ? "Fechar" : "Adicionar"}
+                </button>
+            </div>
 
-                        <label>{sectorConfig.serviceLabel}</label>
-
-
-                        <input
-                            value={form.service}
-                            onChange={(e) => setForm({...form, service: e.target.value})}
-                        />
-
-                        <label>{sectorConfig.paymentLabel}</label>
-                        <input
-                            value={form.payment}
-                            onChange={(e) => setForm({...form, payment: e.target.value})}
-                        />
-
-                        <label>Valor (R$)</label>
-                        <input
-                            value={form.value}
-                            onChange={(e) => setForm({...form, value: e.target.value})}
-                            type="number"
-                            step="0.01"
-                        />
-
-                        <label>Coluna</label>
-                        <select
-                            value={form.column}
-                            onChange={(e) => setForm({...form, column: e.target.value})}
-                        >
-                            {columns.map((c) => (<option key={c.id} value={c.id}>
-                                    {c.title}
-                                </option>))}
-                        </select>
-
-                        <div style={{display: "flex", gap: 8, marginTop: 8}}>
-                            <button className="btn-primary" type="submit">
-                                Adicionar
-                            </button>
-                            <button
-                                type="button"
-                                className="btn-ghost"
-                                onClick={() => setShowForm(false)}
-                            >
-                                Cancelar
-                            </button>
+            <div className="card" style={{marginBottom: 12, padding: 16}}>
+                <div style={{display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap"}}>
+                    <div>
+                        <h3 style={{margin: 0}}>{sectorConfig.title}</h3>
+                        <p style={{margin: "6px 0 0", color: "var(--muted)"}}>
+                            {sectorConfig.description}
+                        </p>
+                    </div>
+                    {sectorId === "marketing" && (
+                        <div style={{display: "flex", gap: 12, flexWrap: "wrap"}}>
+                            <div className="total-badge">Quentes: {statusTotals.quente}</div>
+                            <div className="total-badge">Mornos: {statusTotals.morno}</div>
+                            <div className="total-badge">Frios: {statusTotals.frio}</div>
                         </div>
-                    </form>
-                </div>)}
+                    )}
+                </div>
+
+                {sectorId === "marketing" && (
+                    <div style={{marginTop: 12}}>
+                        <div style={{fontSize: 12, color: "var(--muted)"}}>Serviços em destaque</div>
+                        <div style={{display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6}}>
+                            {Object.entries(serviceTotals).map(([service, count]) => (
+                                <span key={service} className="badge">
+                                    {service}: {count}
+                                </span>
+                            ))}
+                            {Object.keys(serviceTotals).length === 0 && (
+                                <span className="badge">Nenhum serviço cadastrado</span>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+
+            {showForm && (<div className="card" style={{marginBottom: 12}}>
+                <form className="form" onSubmit={addLead}>
+                    <label>{sectorConfig.nameLabel}</label>
+                    <input
+                        value={form.name}
+                        onChange={(e) => setForm({...form, name: e.target.value})}
+                    />
+                    {sectorConfig.showStatus && (
+                        <>
+                            <label>Status</label>
+                            <select
+                                value={form.status}
+                                onChange={(e) => setForm({...form, status: e.target.value})}
+                            >
+                                <option value="quente">Quente</option>
+                                <option value="morno">Morno</option>
+                                <option value="frio">Frio</option>
+                            </select>
+                        </>
+                    )}
+
+                    <label>{sectorConfig.serviceLabel}</label>
+
+
+                    <input
+                        value={form.service}
+                        onChange={(e) => setForm({...form, service: e.target.value})}
+                    />
+
+                    <label>{sectorConfig.paymentLabel}</label>
+                    <input
+                        value={form.payment}
+                        onChange={(e) => setForm({...form, payment: e.target.value})}
+                    />
+
+                    {sectorConfig.showValue && (
+                        <>
+                            <label>Valor (R$)</label>
+                            <input
+                                value={form.value}
+                                onChange={(e) => setForm({...form, value: e.target.value})}
+                                type="number"
+                                step="0.01"
+                            />
+                        </>
+                    )}
+
+
+                    <label>Coluna</label>
+                    <select
+                        value={form.column}
+                        onChange={(e) => setForm({...form, column: e.target.value})}
+                    >
+                        {columns.map((c) => (<option key={c.id} value={c.id}>
+                            {c.title}
+                        </option>))}
+                    </select>
+
+                    <div style={{display: "flex", gap: 8, marginTop: 8}}>
+                        <button className="btn-primary" type="submit">
+                            Adicionar
+                        </button>
+                        <button
+                            type="button"
+                            className="btn-ghost"
+                            onClick={() => setShowForm(false)}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>)}
 
             <div className="card" style={{marginBottom: 12}}>
                 <div style={{display: "flex", gap: 8, alignItems: "center"}}>
@@ -306,126 +322,128 @@ export default function Board({
                     const colTotal = items.reduce((s, l) => s + (Number(l.value) || 0), 0);
 
                     return (<div
-                            key={col.id}
-                            className="column card"
-                            onDragOver={onDragOver}
-                            onDrop={(e) => onDropTo(e, col.id)}
-                            style={{padding: 12, minHeight: 200}}
+                        key={col.id}
+                        className="column card"
+                        onDragOver={onDragOver}
+                        onDrop={(e) => onDropTo(e, col.id)}
+                        style={{padding: 12, minHeight: 200}}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                marginBottom: 8,
+                            }}
                         >
-                            <div
+                            <h3 style={{margin: 0}}>{col.title}</h3>
+                            <div style={{textAlign: "right", fontSize: 12, color: "var(--muted)"}}>
+                                <div>
+                                    {items.length} {items.length === 1 ? "lead" : "leads"}
+                                </div>
+                                {sectorConfig.showValue && <div>R$ {colTotal.toFixed(2)}</div>}
+                            </div>
+                        </div>
+
+                        <div style={{display: "flex", flexDirection: "column", gap: 10}}>
+                            {items.map((l) => (<div
+                                key={l.id}
+                                draggable
+                                onDragStart={(e) => onDragStart(e, l.id)}
+                                className="lead-card"
                                 style={{
+                                    padding: 10,
+                                    borderRadius: 8,
+                                    background: "#fff",
+                                    boxShadow: "var(--shadow)",
                                     display: "flex",
                                     justifyContent: "space-between",
-                                    alignItems: "center",
-                                    marginBottom: 8,
+                                    alignItems: "flex-start",
                                 }}
                             >
-                                <h3 style={{margin: 0}}>{col.title}</h3>
-                                <div style={{textAlign: "right", fontSize: 12, color: "var(--muted)"}}>
-                                    <div>
-                                        {items.length} {items.length === 1 ? "lead" : "leads"}
-                                    </div>
-                                    <div>R$ {colTotal.toFixed(2)}</div>
-                                </div>
-                            </div>
-
-                            <div style={{display: "flex", flexDirection: "column", gap: 10}}>
-                                {items.map((l) => (<div
-                                        key={l.id}
-                                        draggable
-                                        onDragStart={(e) => onDragStart(e, l.id)}
-                                        className="lead-card"
-                                        style={{
-                                            padding: 10,
-                                            borderRadius: 8,
-                                            background: "#fff",
-                                            boxShadow: "var(--shadow)",
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "flex-start",
-                                        }}
-                                    >
-                                        <div style={{flex: 1, marginRight: 8}}>
-                                            <div style={{fontWeight: 700}}>{l.name}</div>
-                                            <div style={{color: "var(--muted)", fontSize: 13, marginTop: 6}}>
-                                                {l.service || "—"}
-                                                {sectorConfig.showStatus && (
-                                                    <>
-                                                        {" "}
-                                                        ·{" "}
-                                                        <span
-                                                            style={{
-                                                                background: statusColor(l.status),
-                                                                padding: "2px 8px",
-                                                                borderRadius: 999,
-                                                                fontWeight: 600,
-                                                            }}
-                                                        >
+                                <div style={{flex: 1, marginRight: 8}}>
+                                    <div style={{fontWeight: 700}}>{l.name}</div>
+                                    <div style={{color: "var(--muted)", fontSize: 13, marginTop: 6}}>
+                                        {l.service || "—"}
+                                        {sectorConfig.showStatus && (
+                                            <>
+                                                {" "}
+                                                ·{" "}
+                                                <span
+                                                    style={{
+                                                        background: statusColor(l.status),
+                                                        padding: "2px 8px",
+                                                        borderRadius: 999,
+                                                        fontWeight: 600,
+                                                    }}
+                                                >
                                                             {l.status}
                                                         </span>
-                                                    </>
-                                                )}{" "}
+                                            </>
+                                        )}{" "}
 
-                                                · {l.payment || "—"}
-                                            </div>
 
-                                            <div style={{marginTop: 8}}>
-                                                <label style={{fontSize: 12, color: "var(--muted)"}}>
-                                                    Mover para setor
-                                                </label>
-                                                <div>
-                                                    <select
-                                                        value={l.sector || sectorId}
-                                                        onChange={(e) => changeSector(l.id, e.target.value)}
-                                                    >
-                                                        <option value={sectorId}>{sectorTitle}</option>
-                                                        {sectors.map((s) => (<option key={s.id} value={s.id}>
-                                                                {s.label}
-                                                            </option>))}
-                                                    </select>
-                                                </div>
-                                            </div>
+                                        · {l.payment || "—"}
+                                    </div>
+
+                                    <div style={{marginTop: 8}}>
+                                        <label style={{fontSize: 12, color: "var(--muted)"}}>
+                                            Mover para setor
+                                        </label>
+                                        <div>
+                                            <select
+                                                value={l.sector || sectorId}
+                                                onChange={(e) => changeSector(l.id, e.target.value)}
+                                            >
+                                                <option value={sectorId}>{sectorTitle}</option>
+                                                {sectors.map((s) => (<option key={s.id} value={s.id}>
+                                                    {s.label}
+                                                </option>))}
+                                            </select>
                                         </div>
+                                    </div>
+                                </div>
 
-                                        <div style={{textAlign: "right", minWidth: 120}}>
-                                            <div style={{fontWeight: 800}}>
-                                                R$ {(Number(l.value) || 0).toFixed(2)}
-                                            </div>
+                                <div style={{textAlign: "right", minWidth: 120}}>
+                                    <div style={{fontWeight: 800}}>
+                                        R$ {(Number(l.value) || 0).toFixed(2)}
+                                    </div>
 
-                                            <div style={{
-                                                display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end"
-                                            }}>
-                                                <button
-                                                    className="btn-ghost"
-                                                    onClick={() => {
-                                                        const idx = columns.findIndex((c) => c.id === l.column);
-                                                        moveTo(l.id, columns[Math.max(0, idx - 1)].id);
-                                                    }}
-                                                    disabled={columns[0].id === l.column}
-                                                >
-                                                    ◀
-                                                </button>
+                                    <div style={{
+                                        display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end"
+                                    }}>
+                                        <button
+                                            className="btn-ghost"
+                                            onClick={() => {
+                                                const idx = columns.findIndex((c) => c.id === l.column);
+                                                moveTo(l.id, columns[Math.max(0, idx - 1)].id);
+                                            }}
+                                            disabled={columns[0].id === l.column}
+                                        >
+                                            ◀
+                                        </button>
 
-                                                <button
-                                                    className="btn-ghost"
-                                                    onClick={() => {
-                                                        const idx = columns.findIndex((c) => c.id === l.column);
-                                                        moveTo(l.id, columns[Math.min(columns.length - 1, idx + 1)].id);
-                                                    }}
-                                                    disabled={columns[columns.length - 1].id === l.column}
-                                                >
-                                                    ▶
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>))}
+                                        <button
+                                            className="btn-ghost"
+                                            onClick={() => {
+                                                const idx = columns.findIndex((c) => c.id === l.column);
+                                                moveTo(l.id, columns[Math.min(columns.length - 1, idx + 1)].id);
+                                            }}
+                                            disabled={columns[columns.length - 1].id === l.column}
+                                        >
+                                            ▶
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>))}
 
-                                {items.length === 0 && (<div style={{color: "var(--muted)", fontSize: 13}}>
-                                        Nenhum lead nesta coluna
-                                    </div>)}
-                            </div>
-                        </div>);
+                            {items.length === 0 && (<div style={{color: "var(--muted)", fontSize: 13}}>
+                                Nenhum lead nesta coluna
+                            </div>)}
+                        </div>
+                    </div>);
                 })}
             </div>
-        </div>);
-}
+        </div>
+    </div>
+)};
